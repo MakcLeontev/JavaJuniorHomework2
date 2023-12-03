@@ -4,7 +4,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TestProcessor {
 
@@ -28,14 +31,28 @@ public class TestProcessor {
       throw new RuntimeException("Не удалось создать объект класса \"" + testClass.getName() + "\"");
     }
 
-    List<Method> methods = new ArrayList<>();
+    List<Method> methods;
+    List<Method> beforeMethods = new ArrayList<>();
+    List<Method> afterMethods = new ArrayList<>();
+    List<Method> normalMethods = new ArrayList<>();
     for (Method method : testClass.getDeclaredMethods()) {
       if (method.isAnnotationPresent(Test.class)) {
         checkTestMethod(method);
-        methods.add(method);
+        normalMethods.add(method);
+      }
+      if (method.isAnnotationPresent((BeforeEach.class))) {
+        checkTestMethod(method);
+        beforeMethods.add(method);
+      }
+      if (method.isAnnotationPresent((AfterEach.class))) {
+        checkTestMethod(method);
+        afterMethods.add(method);
       }
     }
 
+    List<Method>filterList = normalMethods.stream().sorted(Comparator.comparingInt(a -> a.getAnnotation(Test.class).order())).toList();
+    List<Method> intermediate = Stream.concat(beforeMethods.stream(),filterList.stream()).collect(Collectors.toList());
+    methods = Stream.concat(intermediate.stream(),afterMethods.stream()).collect(Collectors.toList());
     methods.forEach(it -> runTest(it, testObj));
   }
 

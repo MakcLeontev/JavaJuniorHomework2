@@ -16,12 +16,22 @@ public class Homework {
 
 
   public static void main(String[] args) {
+
     TestProcessor.runTest(MyTest.class);
   }
 
   static class MyTest {
 
-    @Test
+    @BeforeEach
+    void thirdTest(){
+      System.out.println("beforeEach запущен");
+    }
+    @AfterEach
+    void fourTest(){
+      System.out.println("AfterEach запущен");
+    }
+
+    @Test(order = -1)
     void firstTest() {
       System.out.println("firstTest запущен");
     }
@@ -29,6 +39,11 @@ public class Homework {
     @Test
     void secondTest() {
       System.out.println("secondTest запущен");
+    }
+
+    @Test(order = -5)
+    void fiveTest() {
+      System.out.println("fiveTest запущен");
     }
 
   }
